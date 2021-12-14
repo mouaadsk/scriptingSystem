@@ -1,0 +1,23 @@
+{
+    "fileName": "dimpfile.sql",
+    "zipUrl": "http://localhost:7123/webServer/my_zip.zip",
+    "loaclServerConfig": {
+        "port": 9999
+    },
+    "zipFileName": "my_zip.zip",
+    "smtpConfig": {
+        "authentication": {
+            "email": "noreply@ariba.ma",
+            "password": "Agadir414$"
+        },
+        "serverIp": "mail.ariba.ma",
+        "serverPort": 465,
+        "emailTitle": "Daily Report",
+        "destinations": [
+            "mouaadsk@protonmail.com"
+        ]
+    },
+    "sendEmail" : "always",
+    "logFileName": "log.log",
+    "attachLog": true
+}
