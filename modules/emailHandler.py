@@ -1,5 +1,3 @@
-import re
-import json
 import smtplib
 import ssl
 import email.utils
@@ -8,20 +6,15 @@ from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
 from email import encoders
 from email_validator import validate_email
-import smtpd
-import asyncore
+import enum
 import os
-import threading
-
-class EmlServer(smtpd.SMTPServer):
-    no = 0
-    def process_message(self, peer, mailfrom, rcpttos, data):
-        print('Receiving message from:', peer)
-        print('Message addressed from:', mailfrom)
-        print('Message addressed to:', rcpttos)
-        print('Message length:', len(data))
-        return
-
+class LogMessageType(enum.Enum):
+    Debug = 1
+    Info = 2
+    Critical = 3
+    Warning = 4
+    Error = 5
+    Exception = 6
 
 
 class EmailHandler :
@@ -36,9 +29,10 @@ class EmailHandler :
             self.logFileName = config["logFileName"]
             self.emailHandler = None
             self.localServer = None
+            self.logger = config["logger"]
             self.initializeService()
         except Exception as e:
-            print(e)
+            self.logger.addLine(LogMessageType.Error, "Configuration", "Please chack that you added all the needed configurations in the config file")
     def initializeService(self):
         try:
             context = ssl.create_default_context()
@@ -48,51 +42,62 @@ class EmailHandler :
             )
 
         except TimeoutError:
-            self.log_email_matt.warning(
-                "E-mail server connection",
-                "Timeout error, check e-mail server is down. E-mails not sent.",
+            self.logger.addLogLine(
+                LogMessageType.Error,
+                "SMTP Connection",
+                "Timeout error, please check you email server state (maybe it is down)",
             )
 
         except smtplib.SMTPServerDisconnected as e:
-            print(e)
+            self.logger.addLogLine(
+                LogMessageType.Error,
+                "SMTP Connection",
+                "Server disconnected us , please reconfigue it to accept the connection ",
+            )
     def sendFromLocal(self, linesList):
     #TODO : here we create an internal smtp server : Need to change this in here
         try:
             message = MIMEMultipart()
             message.set_unixfrom('author')
-            msg['To'] = email.utils.formataddr(('Recipient', self.destinations[0]))
-            msg['From'] = email.utils.formataddr(('Author', self.authentication["email"]))
+            message['To'] = email.utils.formataddr(('Recipient', self.destinations[0]))
+            message['From'] = email.utils.formataddr(('Author', self.authentication["email"]))
             message["Subject"] = self.emailTitle
             message.attach(MIMEText(self.formatEmailContent(linesList)))
             if(self.attachLog):
                 message = self.attachLogToMessage(message)
             localServer = smtplib.SMTP('localhost')
             localServer.set_debuglevel(1)
-            localServer.send_message(message)
         except Exception as e:
-            print(e)
-    
-    def sendEmail(self, linesList):
+            self.logger.addLogLine(LogMessageType.Error,"Email Creation","An Error occured during creation of the email ")
+        finally:
+            localServer.send_message(message)
+            self.logger.addLogLine(LogMessageType.INFO,"Sending the email","Daily report email is sent succefully")
+    def sendEmails(self):
         try:
+            if(len(self.destinations)==0):
+                self.logger.addLogLine(LogMessageType.Warning, "Sending Email Block", "Please add some destination in the config file")
             self.emailHandler.login(self.authentication["email"],self.authentication["password"])
+            self.logger.addLogLine(LogMessageType.Error, "SMTP Login", "Successful Login")
             message = MIMEMultipart()
             message["Subject"] = self.emailTitle
             message["To"] = self.destinations[0]
-            print(message["To"])
             message["From"] = self.authentication["email"]
-            message.attach(MIMEText(self.formatEmailContent(linesList)))
+            message.attach(MIMEText(self.formatEmailContent(self.logger.getLogLines())))
             if(self.attachLog):
                 message = self.attachLogToMessage(message)
-            response = self.emailHandler.send_message(message)
+            for email in self.destinations:
+                if(validate_email(email)):
+                    message["To"] = email
+                    self.emailHandler.send_message(message)
+                else :
+                    self.logger.addLogLine(LogMessageType.Warning, "Senfing Email Block ", email + " is an Invalid Email")
         except smtplib.SMTPAuthenticationError:
-            print("Logging-in email server , The server did not accept the username/password combination. E-mails not sent.") 
+            self.logger.addLogLine(LogMessageType.Error,"SMTP Login "," The cridentials aren't correct : please check username and password in the config file (email is not sent)") 
         except smtplib.SMTPNotSupportedError:
-            print("Logging-in email server , The AUTH command is not supported by the server. E-mails not sent.")
+            self.logger(LogMessageType.Error,"SMTP Login"," Couldn't connect : the auth command isn't accepted by the server (email is not sent)")
         # Another error
         except smtplib.SMTPException:
-            print("Logging-in email server, Unknown error occured while logging-in to your mail account. E-mail(s)not sent.")
-        except Exception as e:
-            print(e)
+            self.logger(LogMessageType.Error,"SMTP Login"," Unknown error occured while SMTP Logging (email is not sent).")
         finally :
             if(self.emailHandler!=None):
                 self.emailHandler.quit()
@@ -111,5 +116,5 @@ class EmailHandler :
             message.attach(fileInstance)
             return message
         except EnvironmentError:
-            print("Attachment, Unknown error occured during mail attachment loading. No attachment sent with e-mails.")
+            self.logger(LogMessageType.Warning,"Attaching log to email "," Unknown error occured during attaching the log to the email. No attachment is sent with email.")
             

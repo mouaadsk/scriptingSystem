@@ -2,7 +2,7 @@
     "fileName": "dimpfile.sql",
     "zipUrl": "http://localhost:7123/webServer/my_zip.zip",
     "loaclServerConfig": {
-        "port": 9999
+        "port": 7123
     },
     "zipFileName": "my_zip.zip",
     "smtpConfig": {
@@ -17,7 +17,24 @@
             "mouaadsk@protonmail.com"
         ]
     },
+    "webDavConfig" : {
+        "cridentials" : {
+            "serverLink" : "http://webdav.local/svn",
+            "serverLsername" : "admin",
+            "serverPassword" : "admin"    
+        }
+    },
+    "nfsConfig" : {
+        "mountPath" : "nfs_mount_directory",
+        "rootPassword" : "",
+        "host" : "nfs link here"
+
+    },
+    "mattermostConfig" : {
+        "hookLink" : "https://chat.telecomste.fr/hooks/13ta3nw3e787tnxxqkyxfh5xnr"
+    },
     "sendEmail" : "always",
     "logFileName": "log.log",
-    "attachLog": true
+    "attachLog": true,
+    "availabilityDuration" : 1
 }

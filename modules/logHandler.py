@@ -11,9 +11,9 @@ class LogMessageType(enum.Enum):
     Exception = 6
     
 class LogHandler:
-    def __init__(self, config):
+    def __init__(self):
+        self.lines = []
         try:
-            self.config = config
             #clearing the logFile content
             open("log.log", "w").close()
             self.errorCounts = {"crtitical" : 0,"warning" : 0,"debug" : 0, "error" : 0}
@@ -24,23 +24,25 @@ class LogHandler:
             print(e)
     def addLogLine(self, logMessageType ,logAction , messageText):
         try :
+            msg = "%s : %s" %(logAction ,messageText)
+            self.lines.append(msg)
             if logMessageType is LogMessageType.Info:
-                msg = "%s : %s" %(logAction ,messageText)
                 self.logger.info(msg)
-                print("we added infos")
             elif logMessageType is LogMessageType.Warning:
-                self.logger.warning("%s : %s" %(logAction ,messageText))
+                self.logger.warning(msg)
                 self.errorCounts["warning"]+=1
             elif logMessageType is LogMessageType.Error:
-                self.logger.error("%s : %s" %(logAction ,messageText))
+                self.logger.error(msg)
                 self.errorCounts["error"]+=1
             elif logMessageType is LogMessageType.Critical:
-                self.logger.critical("%s : %s" %(logAction ,messageText))
+                self.logger.critical(msg)
                 self.errorCounts["critical"]+=1
             elif logMessageType is LogMessageType.Debug:
-                self.logger.debug("%s : %s" %(logAction ,messageText))
+                self.logger.debug(msg)
                 self.errorCounts["debug"]+=1
         except Exception as e:
             print(e)
     def close(self):
         self.logger.close()
+    def getLogLines(self):
+        return self.lines;
