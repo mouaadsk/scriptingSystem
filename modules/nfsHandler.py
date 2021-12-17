@@ -63,3 +63,21 @@ class NFSHandler:
         fileExists = os.path.exists('"%s/%s"'%(self.config["mountPath"],self.config["tgzFileName"]))
         self.unmount()
         return fileExists
+    def removeOldFile(self):
+        try :
+            deadLine = (datetime.datetime.today()- datetime.timedelta(days=self.availabilityDuration)).date()
+            self.mountLocally()
+            for file in os.listdir(self.config["mountPath"]):
+                try:
+                    date = datetime.datetime.strptime(file.replace(".tgz", ""), "%Y%d%m").date()
+                    #testing the date of the file if it is valid or not
+                    if date < deadLine:
+                        os.remove(self.config["mountPath"]+"/"+file)
+                        self.logger.addLogLine.info(LogMessageType.Info,"NFS Server Cleaning : ",file+" is removed in the server")
+                except ValueError:
+                    self.logger.addLogLine(LogMessageType.Error, "NFS Server Cleaning", "Couldn't remove the " + file + " File ")
+                    pass
+            self.logger.addLogLine(LogMessageType.INFO,"NFS Server removing old files", "All Old Files are removed from the server")
+        except Exception as e:
+            self.logger.addLogLine(LogMessageType.Error, "Removing old tgz Files", "Could.t remove the old files , error " + str(e))
+

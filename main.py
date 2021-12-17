@@ -48,6 +48,6 @@ def main():
     finally:
         emailHandler.sendEmails()
         matterMostHandler.sendNotification()
-
+        
 if __name__ == "__main__":
     main()
