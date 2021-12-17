@@ -2,18 +2,9 @@ import json
 from os.path import exists
 import os
 import datetime
-import enum
+from modules.enum import LogMessageType
 
-
-class LogMessageType(enum.Enum):
-    Debug = 1
-    Info = 2
-    Critical = 3
-    Warning = 4
-    Error = 5
-    Exception = 6
-
-
+#Default configuration to be dumped into the config file
 defaultConfig = """{
     "fileName": "dimpfile.sql",
     "zipUrl": "http://localhost:7123/webServer/my_zip.zip",
@@ -55,13 +46,43 @@ defaultConfig = """{
 }"""
 
 
+
+
+"""
+Config loading and extracting handler
+
+
+Parameters : 
+configPath : text (The path where the config file exists)
+configFileName : text 
+logger : text (The log handler)
+
+Methodes : 
+loadConfig : return None (parsing the configutaitons from the config json file)
+generateConfig : return None (dumping the configuration into the config.json file)
+checkIfConfigFileExists : return bool (chekcs if the config file exists in the path)
+getTGZName : return text (Generates the tgzFileName from today's date)
+getSMTPConfig : return dictionay (gets the emailHandler config needed)
+getWebDavConfig : return dictionay (gets the webDabHandler config needed)
+getNfsConfig : return dictionay (gets the NFSHandler config needed)
+getMattermostConfig : return dictionay (gets the MattermostHandler config needed)
+getZipManipulatorConfig : return dictionay (gets the ZipManipulator config needed)
+getLocalServerConfig  : return dictionay (gets the WebServer config needed)
+
+
+
+"""
+
+
+
 class ConfigHandler:
     def __init__(self, configPath, configFileName, logger=None):
-        self.config = None
         self.configPath = configPath
         self.configFileName = configFileName
         self.logger = logger
+        #Loading the configurations from the config file
         self.loadConfig()
+        self.logger.addLogLine(LogMessageType.Info, "Creating Config Object" , "ConfigHandler object is created succefully")
 
     def loadConfig(self):
         try:
@@ -98,6 +119,7 @@ class ConfigHandler:
         smtpConfig["attachLog"] = self.config["attachLog"]
         smtpConfig["logFileName"] = self.config["logFileName"]
         smtpConfig["logger"] = self.logger
+        smtpConfig["sendEmail"] = self.config["sendEmail"]
         return smtpConfig
 
     def getWebDavConfig(self):
@@ -105,11 +127,13 @@ class ConfigHandler:
         webDavConfig["tgzName"] = self.getTGZName()
         webDavConfig["tgzPath"] = os.getcwd()+"/tmp"
         webDavConfig["logger"] = self.logger
+        webDavConfig["availabilityDuration"] = self.config["availabilityDuration"]
         return webDavConfig
 
     def getNfsConfig(self):
         nfsConfig = self.config["nfsConfig"]
         nfsConfig["logger"] = self.logger
+        nfsConfig["availabilityDuration"] = nfsConfig["availabilityDuration"]
         return nfsConfig
 
     def getMattermostConfig(self):
@@ -125,7 +149,7 @@ class ConfigHandler:
         return self.config["localServerConfig"]
 
 def generateConfig():
-    tempConfigFile = ConfigHandler(os.getcwd(),"config.json")
+    tempConfigFile = ConfigHandler(os.getcwd()+"/../","config.json")
     tempConfigFile.generateConfig()
 
 

@@ -1,13 +1,25 @@
 import requests
 import enum 
+from modules.enum import LogMessageType
 
-class LogMessageType(enum.Enum):
-    Debug = 1
-    Info = 2
-    Critical = 3
-    Warning = 4
-    Error = 5
-    Exception = 6
+"""
+Mattermost controlling sending the mattermost notification
+
+Variables : 
+hookLink : text (the hook used to send the mattermost notification)
+mattermostMessages : list (holds the formatted lines to be sent in the notification)
+configuration : list (holds the number of caracters the should be in every message column)
+logger : LogHandler 
+errorCounts : dictionary (=contians the number of errors found while executing the code)
+
+
+Methodes : 
+addLine : return None (Adding a line to the messages to be sent in the mattermost notificatiokn)
+getFormattedMessage : return text (formates and returns the post request body to be sent in the notification)
+sendNotification : return None (sending the notification using the mattermost hook)
+
+
+"""
 
 
 class MattermostHandler:
@@ -19,6 +31,7 @@ class MattermostHandler:
         self.logger = config["logger"]
     def addLine(self,logMessageType ,logAction , messageText):
         message = " %s"%logAction
+        # Formatting the message line and adding it in the log messgage
         for i in range(self.configurations["progressColumnLength"]-len(logAction)):
             message+=" "
         message+=("| %s"%(messageText))
@@ -40,18 +53,20 @@ class MattermostHandler:
             self.errorCounts["debug"]+=1
         self.mattermosMessages.append(message)
     def getFormattedMessage(self):
+        #creating the formatted messge to be sent in the notification by combining the lines
         formattedMessage = ""
         for i in range(len(self.mattermostMessages)):
-            formattedMessage+=self.mattermostMessges[i]
+            formattedMessage+=self.mattermostMessages[i]
         return formattedMessage
     def sendNotification(self):
+        #creating the payload options
         payload = {
             "icon_url": "https://www.mattermost.org/wp-content/uploads/2016/04/icon.png",
             "text": self.getFormattedMessage(),
         }
         try:
             # Post request on Mattermost TSE server
-            req = requests.post(self.hooks, json=payload)
+            req = requests.post(self.hookLink, json=payload)
             # Raise error if request was not accepted.
             req.raise_for_status()
 

@@ -3,16 +3,9 @@ import zipfile
 import os
 import datetime
 import tarfile
-import enum
+from modules.enum import LogMessageType
 
 
-class LogMessageType(enum.Enum):
-    Debug = 1
-    Info = 2
-    Critical = 3
-    Warning = 4
-    Error = 5
-    Exception = 6
 
 
 class ZipClass:
@@ -73,22 +66,27 @@ class ZipClass:
 
     def extractContent(self):
         try:
+            #Creating the zipFiel object to be extracted
             zipRef = zipfile.ZipFile(self.savingPath+"/"+self.zipFileName, 'r')
             zipRef.extractall(self.savingPath)
             zipRef.close()
+            self.logger.addLogLine(LogMessageType.INFO,"Extracting the zip File", "Zip File is extracted succefully: ")
         except Exception as e:
             self.logger.addLogLine(LogMessageType.Critical,"Extracting the zip File", "Error in extracting the file : "+str(e))
     def clean(self):
         try:
+            #Removing the zipFile , the extracted file and the created TGZFile
             os.remove(self.savingPath + "/" + self.zipFileName)
             os.remove(self.savingPath + "/" + self.fileName)
             os.remove(self.savingPath + "/" + self.tgzName)
+            self.logger.addLogLine(LogMessageType.Info,"Cleaning the zip files", "All Junk files are removed succefulyy: ")
         except Exception as e:
             self.logger.addLogLine(LogMessageType.Error,"Cleaning the zip files", "Error occured while removing the zipClass junk : "+str(e))
 
     def checkIfContainsTheFileAndGetInfos(self):
         try:
             zipRef = zipfile.ZipFile(self.savingPath+"/"+self.zipFileName, 'r')
+            #searching if a fileName equals to the fileName passed in the parameters
             for zipInfo in zipRef.filelist:
                 if(zipInfo.filename == self.fileName):
                     self.fileInfos = zipInfo
@@ -111,6 +109,7 @@ class ZipClass:
 
     def compressIntoTGZ(self):
         try:
+            #Generating the TGZFilname based on the today's date
             today = datetime.date.today()
             self.tgzName = ("%d%d%d" %
                             (today.year, today.month, today.day))+".tgz"

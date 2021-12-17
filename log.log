@@ -1,0 +1,6 @@
+2021-12-16 22:23:29,846 - INFO - Initilializing the logger objdect : The logger object is initialized
+2021-12-16 22:23:29,846 - INFO - Creating Config Object : ConfigHandler object is created succefully
+2021-12-16 22:23:30,832 - INFO - WebDavHandler Creation : WebDav Handler created succefully
+2021-12-16 22:23:30,838 - CRITICAL - Zip File Checking : Error occured whicle checking zip file content File is not a zip file
+2021-12-16 22:23:30,838 - CRITICAL - Zip Checking :  : Zip File doesn't contain the wanted file.
+2021-12-16 22:23:31,242 - ERROR - SMTP Login : Successful Login
